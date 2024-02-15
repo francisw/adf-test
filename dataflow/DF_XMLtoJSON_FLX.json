@@ -8,10 +8,6 @@
 		"typeProperties": {
 			"sources": [
 				{
-					"dataset": {
-						"referenceName": "XML",
-						"type": "DatasetReference"
-					},
 					"name": "SourceXML"
 				}
 			],
@@ -30,12 +26,6 @@
 			],
 			"transformations": [
 				{
-					"name": "FlattenXMLRelevantFields"
-				},
-				{
-					"name": "DerivingObjectColumns"
-				},
-				{
 					"name": "SelectingAndReorderingColumns"
 				}
 			],
@@ -44,55 +34,21 @@
 				"     param_sourcefilename as string,",
 				"     param_pipelinename as string",
 				"}",
-				"source(output(",
-				"          flx as (Flight as ({@mode} as string, AcMvmt as (OfBl as string, OfBlLt as string, OnBl as string, TDwn as string, TkOf as string), FId as (AC as string, AlD as string, DI as string, Dst as string, Dte as date, Nr as short, Op as string, Org as string, Reg as string, Sf as string), Fuel as (BC as ({@u} as string, {_value_} as short), Dns as ({@u} as string, {_value_} as double), Of as ({@u} as string, {_value_} as short), Rem as ({@u} as string, {_value_} as short), Sd as ({@u} as string, {_value_} as short), Src as string, Sup as string, Up as ({@u} as string, {_value_} as short)))[])",
-				"     ),",
-				"     allowSchemaDrift: true,",
+				"source(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     ignoreNoFilesFound: false,",
-				"     validationMode: 'none',",
-				"     namespaces: true,",
 				"     wildcardPaths:[($param_sourcefilename)]) ~> SourceXML",
-				"SourceXML foldDown(unroll(flx.Flight),",
-				"     mapColumn(",
-				"          mode = flx.Flight.{@mode},",
-				"          aircraftRegistration = flx.Flight.FId.Reg,",
-				"          arrivalAirport_codeIATA = flx.Flight.FId.Dst,",
-				"          departureAirport_codeIATA = flx.Flight.FId.Org,",
-				"          designator_codeIATA = flx.Flight.FId.AlD,",
-				"          domIntFlag = flx.Flight.FId.DI,",
-				"          flightDate = flx.Flight.FId.Dte,",
-				"          flightNr = flx.Flight.FId.Nr,",
-				"          flightSuffix = flx.Flight.FId.Sf,",
-				"          operator_codeIATA = flx.Flight.FId.Op,",
-				"          scheduledArrivalAirport_codeIATA = flx.Flight.FId.SchDst,",
-				"          timestamps_actualOffblockTimeLocal = flx.Flight.AcMvmt.OfBlLt,",
-				"          timestamps_actualOffblockTimeUTC = flx.Flight.AcMvmt.OfBl,",
-				"          timestamps_actualOnblockTimeUTC = flx.Flight.AcMvmt.OnBl,",
-				"          timestamps_actualTouchdownTimeUTC = flx.Flight.AcMvmt.TDwn,",
-				"          timestamps_actualTakeoffTimeUTC = flx.Flight.AcMvmt.TkOf",
-				"     ),",
-				"     skipDuplicateMapInputs: false,",
-				"     skipDuplicateMapOutputs: false) ~> FlattenXMLRelevantFields",
-				"FlattenXMLRelevantFields derive(arrivalAirport = associate('codeIATA', arrivalAirport_codeIATA),",
-				"          atc = associate('callsign', ATC_callsign, 'flightCRCOType', ATC_flightCRCOType, 'otherInfo', ATC_otherInfo, 'route', ATC_route),",
-				"          departureAirport = associate('codeIATA', departureAirport_codeIATA),",
-				"          designator = associate('codeICAO', designator_codeICAO),",
-				"          operator = associate('codeIATA', operator_codeIATA),",
-				"          scheduledArrivalAirport = associate('codeIATA', scheduledArrivalAirport_codeIATA),",
-				"          timestamps = associate('actualOffblockTimeLocal', timestamps_actualOffblockTimeLocal, 'actualOffblockTimeUTC', timestamps_actualOffblockTimeUTC, 'actualOnblockTimeUTC', timestamps_actualOnblockTimeUTC, 'actualTouchdownTimeUTC', timestamps_actualTouchdownTimeUTC, 'actualTakeoffTimeUTC', timestamps_actualTakeoffTimeUTC)) ~> DerivingObjectColumns",
-				"DerivingObjectColumns select(mapColumn(",
-				"          mode,",
-				"          aircraftRegistration,",
+				"SourceXML select(mapColumn(",
+				"          mode = {flx.Flight.{@mode}},",
+				"          aircraftRegistration = {flx.Flight.FId.Reg},",
 				"          arrivalAirport,",
 				"          atc,",
 				"          departureAirport,",
 				"          designator,",
-				"          domIntFlag,",
-				"          flightDate,",
-				"          flightNr,",
+				"          domIntFlag = {flx.Flight.FId.DI},",
+				"          flightDate = {flx.Flight.FId.Dte},",
+				"          flightNr = {flx.Flight.FId.Nr},",
 				"          operator,",
-				"          flightSuffix,",
+				"          flightSuffix = {flx.Flight.FId.Sf},",
 				"          scheduledArrivalAirport,",
 				"          serviceType,",
 				"          timestamps",

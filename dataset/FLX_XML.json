@@ -1,5 +1,5 @@
 {
-	"name": "FLX_BINARY",
+	"name": "FLX_XML",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "IngressBlobStorage1",
@@ -9,7 +9,7 @@
 			"name": "FLX/in"
 		},
 		"annotations": [],
-		"type": "Binary",
+		"type": "Xml",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",

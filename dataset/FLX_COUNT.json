@@ -1,5 +1,5 @@
 {
-	"name": "FLX_BINARY",
+	"name": "FLX_COUNT",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "IngressBlobStorage1",
@@ -9,13 +9,14 @@
 			"name": "FLX/in"
 		},
 		"annotations": [],
-		"type": "Binary",
+		"type": "Json",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
-				"folderPath": "in",
+				"folderPath": "stats",
 				"container": "adf-test"
 			}
-		}
+		},
+		"schema": {}
 	}
 }

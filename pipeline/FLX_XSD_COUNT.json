@@ -1,5 +1,5 @@
 {
-	"name": "FLX_to_API",
+	"name": "FLX_XSD_COUNT",
 	"properties": {
 		"activities": [
 			{
@@ -16,13 +16,6 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"dataset": {
-						"referenceName": "XML",
-						"type": "DatasetReference",
-						"parameters": {
-							"filename": "*.xml"
-						}
-					},
 					"fieldList": [
 						"childItems"
 					],
@@ -53,53 +46,11 @@
 					"isSequential": true,
 					"activities": [
 						{
-							"name": "XML to JSON",
-							"type": "ExecuteDataFlow",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"dataflow": {
-									"referenceName": "DF_XMLtoJSON_FLX",
-									"type": "DataFlowReference",
-									"parameters": {
-										"param_sourcefilename": {
-											"value": "@item().name",
-											"type": "Expression"
-										},
-										"param_pipelinename": {
-											"value": "@pipeline().Pipeline",
-											"type": "Expression"
-										}
-									},
-									"datasetParameters": {
-										"SourceXML": {
-											"filename": {
-												"value": "@item().name",
-												"type": "Expression"
-											}
-										}
-									}
-								},
-								"compute": {
-									"coreCount": 8,
-									"computeType": "General"
-								},
-								"traceLevel": "Fine"
-							}
-						},
-						{
 							"name": "archive",
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "XML to JSON",
+									"activity": "Validate",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -114,19 +65,6 @@
 							},
 							"userProperties": [],
 							"typeProperties": {
-								"source": {
-									"type": "XmlSource",
-									"storeSettings": {
-										"type": "AzureBlobStorageReadSettings",
-										"recursive": true,
-										"enablePartitionDiscovery": false
-									},
-									"formatSettings": {
-										"type": "XmlReadSettings",
-										"validationMode": "none",
-										"namespaces": true
-									}
-								},
 								"sink": {
 									"type": "JsonSink",
 									"storeSettings": {
@@ -139,18 +77,6 @@
 								},
 								"enableStaging": false
 							},
-							"inputs": [
-								{
-									"referenceName": "XML",
-									"type": "DatasetReference",
-									"parameters": {
-										"filename": {
-											"value": "@item().name",
-											"type": "Expression"
-										}
-									}
-								}
-							],
 							"outputs": [
 								{
 									"referenceName": "FLX_ARCHIVE",
@@ -178,16 +104,6 @@
 							},
 							"userProperties": [],
 							"typeProperties": {
-								"dataset": {
-									"referenceName": "XML",
-									"type": "DatasetReference",
-									"parameters": {
-										"filename": {
-											"value": "@item().name",
-											"type": "Expression"
-										}
-									}
-								},
 								"logStorageSettings": {
 									"linkedServiceName": {
 										"referenceName": "IngressBlobStorage1",
@@ -201,6 +117,41 @@
 									"recursive": true,
 									"enablePartitionDiscovery": false
 								}
+							}
+						},
+						{
+							"name": "Validate",
+							"description": "Validate the file matches XSD",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "FLX XSD Parser",
+									"type": "DataFlowReference",
+									"parameters": {
+										"param_sourcefilename": {
+											"value": "@item().name",
+											"type": "Expression"
+										},
+										"param_pipelinename": {
+											"value": "@pipeline().Pipeline",
+											"type": "Expression"
+										}
+									}
+								},
+								"compute": {
+									"coreCount": 8,
+									"computeType": "General"
+								},
+								"traceLevel": "Fine"
 							}
 						}
 					]

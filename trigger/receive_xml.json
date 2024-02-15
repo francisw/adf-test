@@ -7,7 +7,7 @@
 		"pipelines": [
 			{
 				"pipelineReference": {
-					"referenceName": "FLX_to_API",
+					"referenceName": "FLX_XSD_COUNT",
 					"type": "PipelineReference"
 				}
 			}

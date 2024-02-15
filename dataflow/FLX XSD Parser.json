@@ -1,0 +1,69 @@
+{
+	"name": "FLX XSD Parser",
+	"properties": {
+		"folder": {
+			"name": "FLX"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "FLX_XML",
+						"type": "DatasetReference"
+					},
+					"name": "XMLParser",
+					"description": "Check the dataset parses"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "FLX_COUNT",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "aggregate1"
+				},
+				{
+					"name": "flatten1"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     param_sourcefilename as string,",
+				"     param_pipelinename as string",
+				"}",
+				"source(output(",
+				"          flx as (Flight as ({@mode} as string, AcMvmt as (OfBl as string, OfBlLt as string, OnBl as string, TDwn as string, TkOf as string), FId as (AC as string, AlD as string, DI as string, Dst as string, Dte as date, Nr as short, Op as string, Org as string, Reg as string, Sf as string), Fuel as (BC as ({@u} as string, {_value_} as short), Dns as ({@u} as string, {_value_} as double), Of as ({@u} as string, {_value_} as short), Rem as ({@u} as string, {_value_} as short), Sd as ({@u} as string, {_value_} as short), Src as string, Sup as string, Up as ({@u} as string, {_value_} as short)))[])",
+				"     ),",
+				"     allowSchemaDrift: false,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     validationMode: 'xsd',",
+				"     namespaces: true,",
+				"     wildcardPaths:[($param_sourcefilename)]) ~> XMLParser",
+				"flatten1 aggregate(groupBy(FId),",
+				"     FIdCnt = count()) ~> aggregate1",
+				"XMLParser foldDown(unroll(flx.Flight),",
+				"     mapColumn(",
+				"          FId = flx.Flight.{@mode},",
+				"          Nr = flx.Flight.FId.Nr,",
+				"          Dte = flx.Flight.FId.Dte",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> flatten1",
+				"aggregate1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:[(concat($param_sourcefilename,'.json'))],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> sink1"
+			]
+		}
+	}
+}
