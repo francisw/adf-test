@@ -12,7 +12,9 @@
 		"type": "Binary",
 		"typeProperties": {
 			"location": {
-				"type": "AzureBlobStorageLocation"
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "out",
+				"container": "adf-test"
 			}
 		}
 	}
