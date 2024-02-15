@@ -18,7 +18,10 @@
 				"typeProperties": {
 					"dataset": {
 						"referenceName": "XML",
-						"type": "DatasetReference"
+						"type": "DatasetReference",
+						"parameters": {
+							"filename": "*.xml"
+						}
 					},
 					"fieldList": [
 						"childItems"
@@ -107,10 +110,7 @@
 									"type": "XmlSource",
 									"storeSettings": {
 										"type": "AzureBlobStorageReadSettings",
-										"fileListPath": {
-											"value": "@item()",
-											"type": "Expression"
-										},
+										"recursive": true,
 										"enablePartitionDiscovery": false
 									},
 									"formatSettings": {
@@ -134,7 +134,13 @@
 							"inputs": [
 								{
 									"referenceName": "XML",
-									"type": "DatasetReference"
+									"type": "DatasetReference",
+									"parameters": {
+										"filename": {
+											"value": "@item()",
+											"type": "Expression"
+										}
+									}
 								}
 							],
 							"outputs": [
@@ -166,7 +172,13 @@
 							"typeProperties": {
 								"dataset": {
 									"referenceName": "XML",
-									"type": "DatasetReference"
+									"type": "DatasetReference",
+									"parameters": {
+										"filename": {
+											"value": "@item()",
+											"type": "Expression"
+										}
+									}
 								},
 								"logStorageSettings": {
 									"linkedServiceName": {
