@@ -38,7 +38,7 @@
 				"type": "ForEach",
 				"dependsOn": [
 					{
-						"activity": "file_list",
+						"activity": "list_of_files",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -47,7 +47,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('file_list').output.childItems",
+						"value": "@variables('list_of_files')",
 						"type": "Expression"
 					},
 					"isSequential": true,
@@ -197,8 +197,37 @@
 						}
 					]
 				}
+			},
+			{
+				"name": "list_of_files",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "file_list",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "list_of_files",
+					"value": {
+						"value": "@activity('file_list').output.childItems",
+						"type": "Expression"
+					}
+				}
 			}
 		],
+		"variables": {
+			"list_of_files": {
+				"type": "Array"
+			}
+		},
 		"annotations": []
 	}
 }
