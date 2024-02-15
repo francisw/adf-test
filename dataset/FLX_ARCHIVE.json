@@ -14,7 +14,7 @@
 			"location": {
 				"type": "AzureBlobStorageLocation",
 				"folderPath": "archive",
-				"container": "adf_test"
+				"container": "adf-test"
 			}
 		},
 		"schema": {}

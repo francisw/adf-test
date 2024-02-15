@@ -30,7 +30,7 @@
 						"storeSettings": {
 							"type": "AzureBlobStorageReadSettings",
 							"recursive": false,
-							"deleteFilesAfterCompletion": false
+							"deleteFilesAfterCompletion": true
 						},
 						"formatSettings": {
 							"type": "BinaryReadSettings"
@@ -62,7 +62,14 @@
 				"name": "file_list",
 				"description": "Get list of files to process",
 				"type": "GetMetadata",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "move_to_work",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -73,7 +80,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataset": {
-						"referenceName": "FLX_BINARY",
+						"referenceName": "FLX_PROCESSING",
 						"type": "DatasetReference"
 					},
 					"fieldList": [
@@ -92,12 +99,6 @@
 				"name": "for_each_file",
 				"type": "ForEach",
 				"dependsOn": [
-					{
-						"activity": "move_to_work",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					},
 					{
 						"activity": "file_list",
 						"dependencyConditions": [
@@ -146,6 +147,64 @@
 								},
 								"traceLevel": "Fine"
 							}
+						},
+						{
+							"name": "archive",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Data flow1",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobStorageReadSettings",
+										"recursive": true,
+										"wildcardFolderPath": "work",
+										"wildcardFileName": {
+											"value": "@item()",
+											"type": "Expression"
+										},
+										"deleteFilesAfterCompletion": false
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobStorageWriteSettings",
+										"copyBehavior": "FlattenHierarchy"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "FLX_PROCESSING",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "FLX_BINARY_ARCHIVE",
+									"type": "DatasetReference"
+								}
+							]
 						}
 					]
 				}
@@ -174,10 +233,21 @@
 						"referenceName": "FLX_PROCESSING",
 						"type": "DatasetReference"
 					},
+					"logStorageSettings": {
+						"linkedServiceName": {
+							"referenceName": "IngressBlobStorage1",
+							"type": "LinkedServiceReference"
+						},
+						"path": "logs"
+					},
 					"enableLogging": true,
 					"storeSettings": {
 						"type": "AzureBlobStorageReadSettings",
-						"recursive": true,
+						"recursive": false,
+						"wildcardFileName": {
+							"value": "@{activity('file_list').output.childItems}",
+							"type": "Expression"
+						},
 						"enablePartitionDiscovery": false
 					}
 				}
