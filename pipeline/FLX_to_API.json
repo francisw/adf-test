@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "file_list",
+				"name": "Get File List",
 				"description": "Get list of files to process",
 				"type": "GetMetadata",
 				"dependsOn": [],
@@ -38,7 +38,7 @@
 				"type": "ForEach",
 				"dependsOn": [
 					{
-						"activity": "list_of_files",
+						"activity": "Files Array",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -47,13 +47,13 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@variables('list_of_files')",
+						"value": "@variables('Files')",
 						"type": "Expression"
 					},
 					"isSequential": true,
 					"activities": [
 						{
-							"name": "Data flow1",
+							"name": "XML to JSON",
 							"type": "ExecuteDataFlow",
 							"dependsOn": [],
 							"policy": {
@@ -77,6 +77,14 @@
 											"value": "@pipeline().Pipeline",
 											"type": "Expression"
 										}
+									},
+									"datasetParameters": {
+										"SourceXML": {
+											"filename": {
+												"value": "@item().name",
+												"type": "Expression"
+											}
+										}
 									}
 								},
 								"compute": {
@@ -91,7 +99,7 @@
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "Data flow1",
+									"activity": "XML to JSON",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -199,11 +207,11 @@
 				}
 			},
 			{
-				"name": "list_of_files",
+				"name": "Files Array",
 				"type": "SetVariable",
 				"dependsOn": [
 					{
-						"activity": "file_list",
+						"activity": "Get File List",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -215,9 +223,9 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"variableName": "list_of_files",
+					"variableName": "Files",
 					"value": {
-						"value": "@activity('file_list').output.childItems",
+						"value": "@activity('Get File List').output.childItems",
 						"type": "Expression"
 					}
 				}
@@ -225,6 +233,9 @@
 		],
 		"variables": {
 			"list_of_files": {
+				"type": "Array"
+			},
+			"Files": {
 				"type": "Array"
 			}
 		},
