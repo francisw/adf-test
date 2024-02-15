@@ -1,0 +1,9 @@
+{
+	"name": "francisw-df",
+	"location": "northeurope",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "56dafaaf-7e8b-4d94-b5bf-971f2e46663c",
+		"tenantId": "7bd6b203-85b6-48a7-a65b-d0a41831983b"
+	}
+}
