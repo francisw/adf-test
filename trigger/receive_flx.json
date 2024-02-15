@@ -7,7 +7,7 @@
 		"pipelines": [
 			{
 				"pipelineReference": {
-					"referenceName": "pipeline1",
+					"referenceName": "FLX_to_API",
 					"type": "PipelineReference"
 				}
 			}

@@ -1,6 +1,149 @@
 {
-	"name": "pipeline1",
+	"name": "FLX_to_API",
 	"properties": {
+		"activities": [
+			{
+				"name": "move_to_work",
+				"description": "Move the received assets to work",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "adf-test/in/*.flx"
+					},
+					{
+						"name": "Destination",
+						"value": "adf-test/work/*.flx"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "XmlSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "XmlReadSettings",
+							"validationMode": "xsd",
+							"detectDataType": true,
+							"namespaces": true
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings",
+							"copyBehavior": "FlattenHierarchy"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "FLX",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "FLX_PROCESSING",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "flx_to_json",
+				"description": "Convert the file to JSON format",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "move_to_work",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "DF_XMLtoJSON_FLX",
+						"type": "DataFlowReference",
+						"parameters": {
+							"param_sourcefilename": {
+								"value": "'@{activity('move_to_work').output}'",
+								"type": "Expression"
+							},
+							"param_pipelinename": {
+								"value": "'@{pipeline().Pipeline}'",
+								"type": "Expression"
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "move_to_archive",
+				"description": "Archive the input",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "flx_to_json",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "BinarySource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true
+						},
+						"formatSettings": {
+							"type": "BinaryReadSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "FLX_PROCESSING",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
 		"annotations": []
 	}
 }
