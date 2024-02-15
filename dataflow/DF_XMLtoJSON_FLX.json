@@ -8,11 +8,19 @@
 		"typeProperties": {
 			"sources": [
 				{
+					"linkedService": {
+						"referenceName": "IngressBlobStorage1",
+						"type": "LinkedServiceReference"
+					},
 					"name": "SourceXML"
 				}
 			],
 			"sinks": [
 				{
+					"linkedService": {
+						"referenceName": "IngressBlobStorage1",
+						"type": "LinkedServiceReference"
+					},
 					"name": "SinkingToJSON"
 				}
 			],
@@ -32,11 +40,12 @@
 				"     param_sourcefilename as string,",
 				"     param_pipelinename as string",
 				"}",
-				"source(output(",
-				"          flx as (Flight as ({@mode} as string, ATC as (ICAO as string, OI as string, Route as string, Type as string), AcMvmt as (OfBl as string, OfBlLt as string, OnBl as string, TDwn as string, TkOf as string), AlSpec as (Div as string, FlTyp as string, MisId as string, RskHld as string, STyp as string), FId as (AC as string, AlD as string, DI as string, Dst as string, Dte as date, Nr as short, Op as string, Org as string, Own as string, Reg as string, SchDst as string, Sf as string))[])",
-				"     ),",
-				"     allowSchemaDrift: true,",
-				"     validateSchema: false) ~> SourceXML",
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'xml',",
+				"     validationMode: 'none',",
+				"     namespaces: true) ~> SourceXML",
 				"SourceXML foldDown(unroll(flx.Flight),",
 				"     mapColumn(",
 				"          mode = flx.Flight.{@mode},",
@@ -97,6 +106,7 @@
 				"     skipDuplicateMapOutputs: true) ~> SelectingAndReorderingColumns",
 				"SelectingAndReorderingColumns sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
+				"     format: 'json',",
 				"     partitionFileNames:[(concat($param_pipelinename, '-', $param_sourcefilename, '-', toString(currentTimestamp(), 'yyyyMMddHHmmss'), '.json'))],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
