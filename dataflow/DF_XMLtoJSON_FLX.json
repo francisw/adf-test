@@ -17,11 +17,15 @@
 			],
 			"sinks": [
 				{
-					"linkedService": {
+					"dataset": {
+						"referenceName": "FLX_OUT",
+						"type": "DatasetReference"
+					},
+					"name": "SinkingToJSON",
+					"rejectedDataLinkedService": {
 						"referenceName": "IngressBlobStorage1",
 						"type": "LinkedServiceReference"
-					},
-					"name": "SinkingToJSON"
+					}
 				}
 			],
 			"transformations": [
@@ -111,9 +115,6 @@
 				"     skipDuplicateMapOutputs: true) ~> SelectingAndReorderingColumns",
 				"SelectingAndReorderingColumns sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     format: 'json',",
-				"     container: 'adf-test',",
-				"     folderPath: 'out',",
 				"     partitionFileNames:[(concat($param_pipelinename, '-', $param_sourcefilename, '-', toString(currentTimestamp(), 'yyyyMMddHHmmss'), '.json'))],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
