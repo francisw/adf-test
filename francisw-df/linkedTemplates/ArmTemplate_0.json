@@ -11,7 +11,7 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'IngressBlobStorage1'"
 		},
-		"receive_flx_properties_typeProperties_scope": {
+		"receive_xml_properties_typeProperties_scope": {
 			"type": "string",
 			"defaultValue": "/subscriptions/09a315fa-6f00-4d04-97bd-33479e10c718/resourceGroups/training-proj/providers/Microsoft.Storage/storageAccounts/franciswtraining"
 		}
@@ -592,13 +592,13 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/receive_flx')]",
+			"name": "[concat(parameters('factoryName'), '/receive_xml')]",
 			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"description": "When an FLX file arrives in",
+				"description": "When an XML file arrives in",
 				"annotations": [],
-				"runtimeState": "Started",
+				"runtimeState": "Stopped",
 				"pipelines": [
 					{
 						"pipelineReference": {
@@ -611,9 +611,9 @@
 				"type": "BlobEventsTrigger",
 				"typeProperties": {
 					"blobPathBeginsWith": "/adf-test/blobs/in",
-					"blobPathEndsWith": "flx",
+					"blobPathEndsWith": "xml",
 					"ignoreEmptyBlobs": true,
-					"scope": "[parameters('receive_flx_properties_typeProperties_scope')]",
+					"scope": "[parameters('receive_xml_properties_typeProperties_scope')]",
 					"events": [
 						"Microsoft.Storage.BlobCreated"
 					]

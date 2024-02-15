@@ -8,7 +8,7 @@
 		"IngressBlobStorage1_connectionString": {
 			"value": ""
 		},
-		"receive_flx_properties_typeProperties_scope": {
+		"receive_xml_properties_typeProperties_scope": {
 			"value": "/subscriptions/09a315fa-6f00-4d04-97bd-33479e10c718/resourceGroups/training-proj/providers/Microsoft.Storage/storageAccounts/franciswtraining"
 		}
 	}

@@ -11,7 +11,7 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'IngressBlobStorage1'"
 		},
-		"receive_flx_properties_typeProperties_scope": {
+		"receive_xml_properties_typeProperties_scope": {
 			"type": "string",
 			"defaultValue": "/subscriptions/09a315fa-6f00-4d04-97bd-33479e10c718/resourceGroups/training-proj/providers/Microsoft.Storage/storageAccounts/franciswtraining"
 		},
@@ -45,8 +45,8 @@
 					"IngressBlobStorage1_connectionString": {
 						"value": "[parameters('IngressBlobStorage1_connectionString')]"
 					},
-					"receive_flx_properties_typeProperties_scope": {
-						"value": "[parameters('receive_flx_properties_typeProperties_scope')]"
+					"receive_xml_properties_typeProperties_scope": {
+						"value": "[parameters('receive_xml_properties_typeProperties_scope')]"
 					}
 				}
 			},
