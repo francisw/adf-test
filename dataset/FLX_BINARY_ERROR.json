@@ -1,0 +1,21 @@
+{
+	"name": "FLX_BINARY_ERROR",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "IngressBlobStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "error"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "error",
+				"container": "adf-test"
+			}
+		}
+	}
+}
