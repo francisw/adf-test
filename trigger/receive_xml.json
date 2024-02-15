@@ -1,7 +1,7 @@
 {
-	"name": "receive_flx",
+	"name": "receive_xml",
 	"properties": {
-		"description": "When an FLX file arrives in",
+		"description": "When an XML file arrives in",
 		"annotations": [],
 		"runtimeState": "Started",
 		"pipelines": [
@@ -15,7 +15,7 @@
 		"type": "BlobEventsTrigger",
 		"typeProperties": {
 			"blobPathBeginsWith": "/adf-test/blobs/in",
-			"blobPathEndsWith": "flx",
+			"blobPathEndsWith": "xml",
 			"ignoreEmptyBlobs": true,
 			"scope": "/subscriptions/09a315fa-6f00-4d04-97bd-33479e10c718/resourceGroups/training-proj/providers/Microsoft.Storage/storageAccounts/franciswtraining",
 			"events": [
