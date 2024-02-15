@@ -94,7 +94,7 @@
 											"type": "DataFlowReference",
 											"parameters": {
 												"param_sourcefilename": {
-													"value": "@item()",
+													"value": "@item().name",
 													"type": "Expression"
 												},
 												"param_pipelinename": {
@@ -105,7 +105,8 @@
 											"datasetParameters": {
 												"SourceXML": {},
 												"SinkingToJSON": {}
-											}
+											},
+											"linkedServiceParameters": {}
 										},
 										"staging": {},
 										"compute": {
@@ -166,7 +167,7 @@
 											"type": "DatasetReference",
 											"parameters": {
 												"filename": {
-													"value": "@item()",
+													"value": "@item().name",
 													"type": "Expression"
 												}
 											}
@@ -205,7 +206,7 @@
 											"type": "DatasetReference",
 											"parameters": {
 												"filename": {
-													"value": "@item()",
+													"value": "@item().name",
 													"type": "Expression"
 												}
 											}
@@ -220,10 +221,7 @@
 										"enableLogging": true,
 										"storeSettings": {
 											"type": "AzureBlobStorageReadSettings",
-											"fileListPath": {
-												"value": "@item()",
-												"type": "Expression"
-											},
+											"recursive": true,
 											"enablePartitionDiscovery": false
 										}
 									}
@@ -507,11 +505,15 @@
 					],
 					"sinks": [
 						{
-							"linkedService": {
+							"dataset": {
+								"referenceName": "FLX_OUT",
+								"type": "DatasetReference"
+							},
+							"name": "SinkingToJSON",
+							"rejectedDataLinkedService": {
 								"referenceName": "IngressBlobStorage1",
 								"type": "LinkedServiceReference"
-							},
-							"name": "SinkingToJSON"
+							}
 						}
 					],
 					"transformations": [
@@ -601,9 +603,6 @@
 						"     skipDuplicateMapOutputs: true) ~> SelectingAndReorderingColumns",
 						"SelectingAndReorderingColumns sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     format: 'json',",
-						"     container: 'adf-test',",
-						"     folderPath: 'out',",
 						"     partitionFileNames:[(concat($param_pipelinename, '-', $param_sourcefilename, '-', toString(currentTimestamp(), 'yyyyMMddHHmmss'), '.json'))],",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
@@ -612,7 +611,8 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]"
+				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]",
+				"[concat(variables('factoryId'), '/datasets/FLX_OUT')]"
 			]
 		},
 		{

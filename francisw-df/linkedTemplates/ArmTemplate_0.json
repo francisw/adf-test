@@ -231,6 +231,32 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/FLX_PROCESSING')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "IngressBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "FLX/work"
+				},
+				"annotations": [],
+				"type": "Xml",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "work",
+						"container": "adf-test"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/DF_XMLtoJSON_FLX')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -251,11 +277,15 @@
 					],
 					"sinks": [
 						{
-							"linkedService": {
+							"dataset": {
+								"referenceName": "FLX_OUT",
+								"type": "DatasetReference"
+							},
+							"name": "SinkingToJSON",
+							"rejectedDataLinkedService": {
 								"referenceName": "IngressBlobStorage1",
 								"type": "LinkedServiceReference"
-							},
-							"name": "SinkingToJSON"
+							}
 						}
 					],
 					"transformations": [
@@ -345,9 +375,6 @@
 						"     skipDuplicateMapOutputs: true) ~> SelectingAndReorderingColumns",
 						"SelectingAndReorderingColumns sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     format: 'json',",
-						"     container: 'adf-test',",
-						"     folderPath: 'out',",
 						"     partitionFileNames:[(concat($param_pipelinename, '-', $param_sourcefilename, '-', toString(currentTimestamp(), 'yyyyMMddHHmmss'), '.json'))],",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
@@ -356,33 +383,8 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/FLX_PROCESSING')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "IngressBlobStorage1",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "FLX/work"
-				},
-				"annotations": [],
-				"type": "Xml",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"folderPath": "work",
-						"container": "adf-test"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]"
+				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]",
+				"[concat(variables('factoryId'), '/datasets/FLX_OUT')]"
 			]
 		},
 		{
@@ -459,7 +461,7 @@
 											"type": "DataFlowReference",
 											"parameters": {
 												"param_sourcefilename": {
-													"value": "@item()",
+													"value": "@item().name",
 													"type": "Expression"
 												},
 												"param_pipelinename": {
@@ -470,7 +472,8 @@
 											"datasetParameters": {
 												"SourceXML": {},
 												"SinkingToJSON": {}
-											}
+											},
+											"linkedServiceParameters": {}
 										},
 										"staging": {},
 										"compute": {
@@ -531,7 +534,7 @@
 											"type": "DatasetReference",
 											"parameters": {
 												"filename": {
-													"value": "@item()",
+													"value": "@item().name",
 													"type": "Expression"
 												}
 											}
@@ -570,7 +573,7 @@
 											"type": "DatasetReference",
 											"parameters": {
 												"filename": {
-													"value": "@item()",
+													"value": "@item().name",
 													"type": "Expression"
 												}
 											}
@@ -585,10 +588,7 @@
 										"enableLogging": true,
 										"storeSettings": {
 											"type": "AzureBlobStorageReadSettings",
-											"fileListPath": {
-												"value": "@item()",
-												"type": "Expression"
-											},
+											"recursive": true,
 											"enablePartitionDiscovery": false
 										}
 									}
