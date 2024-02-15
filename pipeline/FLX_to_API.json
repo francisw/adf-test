@@ -70,7 +70,7 @@
 									"type": "DataFlowReference",
 									"parameters": {
 										"param_sourcefilename": {
-											"value": "@item()",
+											"value": "@item().name",
 											"type": "Expression"
 										},
 										"param_pipelinename": {
@@ -137,7 +137,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"filename": {
-											"value": "@item()",
+											"value": "@item().name",
 											"type": "Expression"
 										}
 									}
@@ -175,7 +175,7 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"filename": {
-											"value": "@item()",
+											"value": "@item().name",
 											"type": "Expression"
 										}
 									}
@@ -190,10 +190,7 @@
 								"enableLogging": true,
 								"storeSettings": {
 									"type": "AzureBlobStorageReadSettings",
-									"fileListPath": {
-										"value": "@item()",
-										"type": "Expression"
-									},
+									"recursive": true,
 									"enablePartitionDiscovery": false
 								}
 							}
