@@ -3,7 +3,7 @@
 	"properties": {
 		"description": "When an XML file arrives in",
 		"annotations": [],
-		"runtimeState": "Started",
+		"runtimeState": "Stopped",
 		"pipelines": [
 			{
 				"pipelineReference": {
