@@ -1,0 +1,724 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "francisw-df"
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'AzureDataLakeStorage1'"
+		},
+		"IngressBlobStorage1_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'IngressBlobStorage1'"
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://franciswtraining.dfs.core.windows.net/"
+		},
+		"receive_flx_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/09a315fa-6f00-4d04-97bd-33479e10c718/resourceGroups/training-proj/providers/Microsoft.Storage/storageAccounts/franciswtraining"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/FLX_to_API')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "move_to_work",
+						"description": "Move the received assets to work",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "adf-test/in/*.flx"
+							},
+							{
+								"name": "Destination",
+								"value": "adf-test/work/*.flx"
+							}
+						],
+						"typeProperties": {
+							"source": {
+								"type": "BinarySource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": false,
+									"deleteFilesAfterCompletion": true
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							},
+							"sink": {
+								"type": "BinarySink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings",
+									"copyBehavior": "FlattenHierarchy"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "FLX_BINARY",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "FLX_PROCESSING",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "file_list",
+						"description": "Get list of files to process",
+						"type": "GetMetadata",
+						"dependsOn": [
+							{
+								"activity": "move_to_work",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "FLX_PROCESSING",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "BinaryReadSettings"
+							}
+						}
+					},
+					{
+						"name": "for_each_file",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "file_list",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('file_list').output.childItems",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Data flow1",
+									"type": "ExecuteDataFlow",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataflow": {
+											"referenceName": "DF_XMLtoJSON_FLX",
+											"type": "DataFlowReference",
+											"parameters": {
+												"param_sourcefilename": {
+													"value": "@item()",
+													"type": "Expression"
+												},
+												"param_pipelinename": {
+													"value": "@pipeline().Pipeline",
+													"type": "Expression"
+												}
+											},
+											"datasetParameters": {
+												"SourceXML": {},
+												"SinkingToJSON": {}
+											}
+										},
+										"staging": {},
+										"compute": {
+											"coreCount": 8,
+											"computeType": "General"
+										},
+										"traceLevel": "Fine"
+									}
+								},
+								{
+									"name": "archive",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Data flow1",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "BinarySource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true,
+												"wildcardFolderPath": "work",
+												"wildcardFileName": {
+													"value": "@item()",
+													"type": "Expression"
+												},
+												"deleteFilesAfterCompletion": false
+											},
+											"formatSettings": {
+												"type": "BinaryReadSettings"
+											}
+										},
+										"sink": {
+											"type": "BinarySink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings",
+												"copyBehavior": "FlattenHierarchy"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "FLX_PROCESSING",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "FLX_BINARY_ARCHIVE",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"name": "Remove from processing",
+						"type": "Delete",
+						"dependsOn": [
+							{
+								"activity": "for_each_file",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "FLX_PROCESSING",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"logStorageSettings": {
+								"linkedServiceName": {
+									"referenceName": "IngressBlobStorage1",
+									"type": "LinkedServiceReference"
+								},
+								"path": "logs"
+							},
+							"enableLogging": true,
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": false,
+								"wildcardFileName": {
+									"value": "@{activity('file_list').output.childItems}",
+									"type": "Expression"
+								},
+								"enablePartitionDiscovery": false
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/FLX_BINARY')]",
+				"[concat(variables('factoryId'), '/datasets/FLX_PROCESSING')]",
+				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]",
+				"[concat(variables('factoryId'), '/dataflows/DF_XMLtoJSON_FLX')]",
+				"[concat(variables('factoryId'), '/datasets/FLX_BINARY_ARCHIVE')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CSV')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "IngressBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "FLX/in"
+				},
+				"annotations": [],
+				"type": "Xml",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "*.csv",
+						"folderPath": "in",
+						"container": "adf-test"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FLX')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "IngressBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "FLX/in"
+				},
+				"annotations": [],
+				"type": "Xml",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "*.flx",
+						"folderPath": "in",
+						"container": "adf-test"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FLX_ARCHIVE')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "IngressBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "FLX/archive"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "archive",
+						"container": "adf-test"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FLX_BINARY')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "IngressBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "FLX/in"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "*.flx",
+						"folderPath": "in",
+						"container": "adf-test"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FLX_BINARY_ARCHIVE')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "IngressBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "FLX/archive"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "archive",
+						"container": "adf-test"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FLX_OUT')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "IngressBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "FLX/out"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "out",
+						"container": "adf-test"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FLX_PROCESSING')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "IngressBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "work"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@concat(pipeline().Pipeline,'_',pipeline().RunId,'_',formatDateTime(utcnow(), 'yyyyMMddHHmmss'),'_input.flx')",
+							"type": "Expression"
+						},
+						"folderPath": "work",
+						"container": "adf-test"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/XML')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "IngressBlobStorage1",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "FLX/in"
+				},
+				"annotations": [],
+				"type": "Xml",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "*.xml",
+						"folderPath": "in",
+						"container": "adf-test"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataLakeStorage1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('AzureDataLakeStorage1_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('AzureDataLakeStorage1_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/IngressBlobStorage1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Blobs to feed pipeline",
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('IngressBlobStorage1_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/receive_flx')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "When an FLX file arrives in",
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "FLX_to_API",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/adf-test/blobs/in",
+					"blobPathEndsWith": "flx",
+					"ignoreEmptyBlobs": true,
+					"scope": "[parameters('receive_flx_properties_typeProperties_scope')]",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/FLX_to_API')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DF_XMLtoJSON_FLX')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "FLX"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "IngressBlobStorage1",
+								"type": "LinkedServiceReference"
+							},
+							"name": "SourceXML"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "IngressBlobStorage1",
+								"type": "LinkedServiceReference"
+							},
+							"name": "SinkingToJSON"
+						}
+					],
+					"transformations": [
+						{
+							"name": "FlattenXMLRelevantFields"
+						},
+						{
+							"name": "DerivingObjectColumns"
+						},
+						{
+							"name": "SelectingAndReorderingColumns"
+						}
+					],
+					"scriptLines": [
+						"parameters{",
+						"     param_sourcefilename as string,",
+						"     param_pipelinename as string",
+						"}",
+						"source(output(",
+						"          flx as (Flight as ({@mode} as string, ATC as (ICAO as string, OI as string, Route as string, Type as string), AcMvmt as (OfBl as string, OfBlLt as string, OnBl as string, TDwn as string, TkOf as string), AlSpec as (Div as string, FlTyp as string, MisId as string, RskHld as string, STyp as string), FId as (AC as string, AlD as string, DI as string, Dst as string, Dte as date, Nr as short, Op as string, Org as string, Own as string, Reg as string, SchDst as string, Sf as string))[])",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'xml',",
+						"     container: 'adf_test',",
+						"     validationMode: 'none',",
+						"     namespaces: true,",
+						"     wildcardPaths:[($param_sourcefilename)]) ~> SourceXML",
+						"SourceXML foldDown(unroll(flx.Flight),",
+						"     mapColumn(",
+						"          mode = flx.Flight.{@mode},",
+						"          aircraftRegistration = flx.Flight.FId.Reg,",
+						"          airlineSpec_division = flx.Flight.AlSpec.Div,",
+						"          airlineSpec_flightType = flx.Flight.AlSpec.FlTyp,",
+						"          airlineSpec_missionId = flx.Flight.AlSpec.MisId,",
+						"          airlineSpec_riskHolder = flx.Flight.AlSpec.RskHld,",
+						"          arrivalAirport_codeIATA = flx.Flight.FId.Dst,",
+						"          ATC_callsign = flx.Flight.ATC.ICAO,",
+						"          ATC_flightCRCOType = flx.Flight.ATC.Type,",
+						"          ATC_otherInfo = flx.Flight.ATC.OI,",
+						"          ATC_route = flx.Flight.ATC.Route,",
+						"          departureAirport_codeIATA = flx.Flight.FId.Org,",
+						"          designator_codeIATA = flx.Flight.FId.AlD,",
+						"          designator_codeICAO = flx.Flight.ATC.ICAO,",
+						"          domIntFlag = flx.Flight.FId.DI,",
+						"          flightDate = flx.Flight.FId.Dte,",
+						"          flightNr = flx.Flight.FId.Nr,",
+						"          flightSuffix = flx.Flight.FId.Sf,",
+						"          operator_codeIATA = flx.Flight.FId.Op,",
+						"          scheduledArrivalAirport_codeIATA = flx.Flight.FId.SchDst,",
+						"          serviceType = flx.Flight.AlSpec.STyp,",
+						"          timestamps_actualOffblockTimeLocal = flx.Flight.AcMvmt.OfBlLt,",
+						"          timestamps_actualOffblockTimeUTC = flx.Flight.AcMvmt.OfBl,",
+						"          timestamps_actualOnblockTimeUTC = flx.Flight.AcMvmt.OnBl,",
+						"          timestamps_actualTouchdownTimeUTC = flx.Flight.AcMvmt.TDwn,",
+						"          timestamps_actualTakeoffTimeUTC = flx.Flight.AcMvmt.TkOf",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> FlattenXMLRelevantFields",
+						"FlattenXMLRelevantFields derive(airlineSpec = associate('division', airlineSpec_division, 'flightType', airlineSpec_flightType, 'missionId', airlineSpec_missionId, 'riskHolder', airlineSpec_riskHolder),",
+						"          arrivalAirport = associate('codeIATA', arrivalAirport_codeIATA),",
+						"          atc = associate('callsign', ATC_callsign, 'flightCRCOType', ATC_flightCRCOType, 'otherInfo', ATC_otherInfo, 'route', ATC_route),",
+						"          departureAirport = associate('codeIATA', departureAirport_codeIATA),",
+						"          designator = associate('codeIATA', designator_codeIATA, 'codeICAO', designator_codeICAO),",
+						"          operator = associate('codeIATA', operator_codeIATA),",
+						"          scheduledArrivalAirport = associate('codeIATA', scheduledArrivalAirport_codeIATA),",
+						"          timestamps = associate('actualOffblockTimeLocal', timestamps_actualOffblockTimeLocal, 'actualOffblockTimeUTC', timestamps_actualOffblockTimeUTC, 'actualOnblockTimeUTC', timestamps_actualOnblockTimeUTC, 'actualTouchdownTimeUTC', timestamps_actualTouchdownTimeUTC, 'actualTakeoffTimeUTC', timestamps_actualTakeoffTimeUTC)) ~> DerivingObjectColumns",
+						"DerivingObjectColumns select(mapColumn(",
+						"          mode,",
+						"          aircraftRegistration,",
+						"          airlineSpec,",
+						"          arrivalAirport,",
+						"          atc,",
+						"          departureAirport,",
+						"          designator,",
+						"          domIntFlag,",
+						"          flightDate,",
+						"          flightNr,",
+						"          operator,",
+						"          flightSuffix,",
+						"          scheduledArrivalAirport,",
+						"          serviceType,",
+						"          timestamps",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectingAndReorderingColumns",
+						"SelectingAndReorderingColumns sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'json',",
+						"     container: 'adf-test',",
+						"     folderPath: 'out',",
+						"     partitionFileNames:[(concat($param_pipelinename, '-', $param_sourcefilename, '-', toString(currentTimestamp(), 'yyyyMMddHHmmss'), '.json'))],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> SinkingToJSON"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/IngressBlobStorage1')]"
+			]
+		}
+	]
+}

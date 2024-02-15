@@ -1,0 +1,27 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "francisw-df"
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"value": ""
+		},
+		"IngressBlobStorage1_connectionString": {
+			"value": ""
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"value": "https://franciswtraining.dfs.core.windows.net/"
+		},
+		"receive_flx_properties_typeProperties_scope": {
+			"value": "/subscriptions/09a315fa-6f00-4d04-97bd-33479e10c718/resourceGroups/training-proj/providers/Microsoft.Storage/storageAccounts/franciswtraining"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
