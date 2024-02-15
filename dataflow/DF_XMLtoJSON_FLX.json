@@ -1,0 +1,107 @@
+{
+	"name": "DF_XMLtoJSON_FLX",
+	"properties": {
+		"folder": {
+			"name": "FLX"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"name": "SourceXML"
+				}
+			],
+			"sinks": [
+				{
+					"name": "SinkingToJSON"
+				}
+			],
+			"transformations": [
+				{
+					"name": "FlattenXMLRelevantFields"
+				},
+				{
+					"name": "DerivingObjectColumns"
+				},
+				{
+					"name": "SelectingAndReorderingColumns"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     param_sourcefilename as string,",
+				"     param_pipelinename as string",
+				"}",
+				"source(output(",
+				"          flx as (Flight as ({@mode} as string, ATC as (ICAO as string, OI as string, Route as string, Type as string), AcMvmt as (OfBl as string, OfBlLt as string, OnBl as string, TDwn as string, TkOf as string), AlSpec as (Div as string, FlTyp as string, MisId as string, RskHld as string, STyp as string), FId as (AC as string, AlD as string, DI as string, Dst as string, Dte as date, Nr as short, Op as string, Org as string, Own as string, Reg as string, SchDst as string, Sf as string))[])",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false) ~> SourceXML",
+				"SourceXML foldDown(unroll(flx.Flight),",
+				"     mapColumn(",
+				"          mode = flx.Flight.{@mode},",
+				"          aircraftRegistration = flx.Flight.FId.Reg,",
+				"          airlineSpec_division = flx.Flight.AlSpec.Div,",
+				"          airlineSpec_flightType = flx.Flight.AlSpec.FlTyp,",
+				"          airlineSpec_missionId = flx.Flight.AlSpec.MisId,",
+				"          airlineSpec_riskHolder = flx.Flight.AlSpec.RskHld,",
+				"          arrivalAirport_codeIATA = flx.Flight.FId.Dst,",
+				"          ATC_callsign = flx.Flight.ATC.ICAO,",
+				"          ATC_flightCRCOType = flx.Flight.ATC.Type,",
+				"          ATC_otherInfo = flx.Flight.ATC.OI,",
+				"          ATC_route = flx.Flight.ATC.Route,",
+				"          departureAirport_codeIATA = flx.Flight.FId.Org,",
+				"          designator_codeIATA = flx.Flight.FId.AlD,",
+				"          designator_codeICAO = flx.Flight.ATC.ICAO,",
+				"          domIntFlag = flx.Flight.FId.DI,",
+				"          flightDate = flx.Flight.FId.Dte,",
+				"          flightNr = flx.Flight.FId.Nr,",
+				"          flightSuffix = flx.Flight.FId.Sf,",
+				"          operator_codeIATA = flx.Flight.FId.Op,",
+				"          scheduledArrivalAirport_codeIATA = flx.Flight.FId.SchDst,",
+				"          serviceType = flx.Flight.AlSpec.STyp,",
+				"          timestamps_actualOffblockTimeLocal = flx.Flight.AcMvmt.OfBlLt,",
+				"          timestamps_actualOffblockTimeUTC = flx.Flight.AcMvmt.OfBl,",
+				"          timestamps_actualOnblockTimeUTC = flx.Flight.AcMvmt.OnBl,",
+				"          timestamps_actualTouchdownTimeUTC = flx.Flight.AcMvmt.TDwn,",
+				"          timestamps_actualTakeoffTimeUTC = flx.Flight.AcMvmt.TkOf",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> FlattenXMLRelevantFields",
+				"FlattenXMLRelevantFields derive(airlineSpec = associate('division', airlineSpec_division, 'flightType', airlineSpec_flightType, 'missionId', airlineSpec_missionId, 'riskHolder', airlineSpec_riskHolder),",
+				"          arrivalAirport = associate('codeIATA', arrivalAirport_codeIATA),",
+				"          atc = associate('callsign', ATC_callsign, 'flightCRCOType', ATC_flightCRCOType, 'otherInfo', ATC_otherInfo, 'route', ATC_route),",
+				"          departureAirport = associate('codeIATA', departureAirport_codeIATA),",
+				"          designator = associate('codeIATA', designator_codeIATA, 'codeICAO', designator_codeICAO),",
+				"          operator = associate('codeIATA', operator_codeIATA),",
+				"          scheduledArrivalAirport = associate('codeIATA', scheduledArrivalAirport_codeIATA),",
+				"          timestamps = associate('actualOffblockTimeLocal', timestamps_actualOffblockTimeLocal, 'actualOffblockTimeUTC', timestamps_actualOffblockTimeUTC, 'actualOnblockTimeUTC', timestamps_actualOnblockTimeUTC, 'actualTouchdownTimeUTC', timestamps_actualTouchdownTimeUTC, 'actualTakeoffTimeUTC', timestamps_actualTakeoffTimeUTC)) ~> DerivingObjectColumns",
+				"DerivingObjectColumns select(mapColumn(",
+				"          mode,",
+				"          aircraftRegistration,",
+				"          airlineSpec,",
+				"          arrivalAirport,",
+				"          atc,",
+				"          departureAirport,",
+				"          designator,",
+				"          domIntFlag,",
+				"          flightDate,",
+				"          flightNr,",
+				"          operator,",
+				"          flightSuffix,",
+				"          scheduledArrivalAirport,",
+				"          serviceType,",
+				"          timestamps",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectingAndReorderingColumns",
+				"SelectingAndReorderingColumns sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:[(concat($param_pipelinename, '-', $param_sourcefilename, '-', toString(currentTimestamp(), 'yyyyMMddHHmmss'), '.json'))],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> SinkingToJSON"
+			]
+		}
+	}
+}
