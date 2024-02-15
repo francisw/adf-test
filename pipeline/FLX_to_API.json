@@ -26,17 +26,14 @@
 				],
 				"typeProperties": {
 					"source": {
-						"type": "XmlSource",
+						"type": "BinarySource",
 						"storeSettings": {
 							"type": "AzureBlobStorageReadSettings",
-							"recursive": true,
-							"enablePartitionDiscovery": false
+							"recursive": false,
+							"deleteFilesAfterCompletion": false
 						},
 						"formatSettings": {
-							"type": "XmlReadSettings",
-							"validationMode": "xsd",
-							"detectDataType": true,
-							"namespaces": true
+							"type": "BinaryReadSettings"
 						}
 					},
 					"sink": {
@@ -50,7 +47,7 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "FLX",
+						"referenceName": "FLX_BINARY",
 						"type": "DatasetReference"
 					}
 				],
@@ -62,54 +59,103 @@
 				]
 			},
 			{
-				"name": "flx_to_json",
-				"description": "Convert the file to JSON format",
-				"type": "ExecuteDataFlow",
+				"name": "file_list",
+				"description": "Get list of files to process",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "FLX_BINARY",
+						"type": "DatasetReference"
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "for_each_file",
+				"type": "ForEach",
 				"dependsOn": [
 					{
 						"activity": "move_to_work",
 						"dependencyConditions": [
 							"Succeeded"
 						]
+					},
+					{
+						"activity": "file_list",
+						"dependencyConditions": [
+							"Succeeded"
+						]
 					}
 				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
 				"userProperties": [],
 				"typeProperties": {
-					"dataflow": {
-						"referenceName": "DF_XMLtoJSON_FLX",
-						"type": "DataFlowReference",
-						"parameters": {
-							"param_sourcefilename": {
-								"value": "'@{activity('move_to_work').output}'",
-								"type": "Expression"
+					"items": {
+						"value": "@activity('file_list').output.childItems",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Data flow1",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
 							},
-							"param_pipelinename": {
-								"value": "'@{pipeline().Pipeline}'",
-								"type": "Expression"
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "DF_XMLtoJSON_FLX",
+									"type": "DataFlowReference",
+									"parameters": {
+										"param_sourcefilename": {
+											"value": "@item()",
+											"type": "Expression"
+										},
+										"param_pipelinename": {
+											"value": "@pipeline().Pipeline",
+											"type": "Expression"
+										}
+									}
+								},
+								"compute": {
+									"coreCount": 8,
+									"computeType": "General"
+								},
+								"traceLevel": "Fine"
 							}
 						}
-					},
-					"compute": {
-						"coreCount": 8,
-						"computeType": "General"
-					},
-					"traceLevel": "Fine"
+					]
 				}
 			},
 			{
-				"name": "move_to_archive",
-				"description": "Archive the input",
-				"type": "Copy",
+				"name": "Remove from processing",
+				"type": "Delete",
 				"dependsOn": [
 					{
-						"activity": "flx_to_json",
+						"activity": "for_each_file",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -124,24 +170,17 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"source": {
-						"type": "BinarySource",
-						"storeSettings": {
-							"type": "AzureBlobStorageReadSettings",
-							"recursive": true
-						},
-						"formatSettings": {
-							"type": "BinaryReadSettings"
-						}
-					},
-					"enableStaging": false
-				},
-				"inputs": [
-					{
+					"dataset": {
 						"referenceName": "FLX_PROCESSING",
 						"type": "DatasetReference"
+					},
+					"enableLogging": true,
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
 					}
-				]
+				}
 			}
 		],
 		"annotations": []

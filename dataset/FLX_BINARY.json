@@ -1,23 +1,20 @@
 {
-	"name": "FLX_PROCESSING",
+	"name": "FLX_BINARY",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "IngressBlobStorage1",
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
-			"name": "work"
+			"name": "FLX/in"
 		},
 		"annotations": [],
 		"type": "Binary",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
-				"fileName": {
-					"value": "@concat(pipeline().Pipeline,'_',pipeline().RunId,'_',formatDateTime(utcnow(), 'yyyyMMddHHmmss'),'_input.flx')",
-					"type": "Expression"
-				},
-				"folderPath": "work",
+				"fileName": "*.flx",
+				"folderPath": "in",
 				"container": "adf-test"
 			}
 		}

@@ -1,19 +1,19 @@
 {
-	"name": "FLX_OUT",
+	"name": "FLX_ARCHIVE",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "IngressBlobStorage1",
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
-			"name": "FLX/out"
+			"name": "FLX/archive"
 		},
 		"annotations": [],
 		"type": "Json",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
-				"folderPath": "out",
+				"folderPath": "archive",
 				"container": "adf_test"
 			}
 		},
