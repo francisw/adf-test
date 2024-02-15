@@ -1,19 +1,19 @@
 {
-	"name": "XML",
+	"name": "FLX_PROCESSING",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "IngressBlobStorage1",
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
-			"name": "FLX/in"
+			"name": "FLX/work"
 		},
 		"annotations": [],
 		"type": "Xml",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
-				"folderPath": "in",
+				"folderPath": "work",
 				"container": "adf-test"
 			}
 		}

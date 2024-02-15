@@ -3,73 +3,10 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "move_to_work",
-				"description": "Move the received assets to work",
-				"type": "Copy",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [
-					{
-						"name": "Source",
-						"value": "adf-test/in/*.flx"
-					},
-					{
-						"name": "Destination",
-						"value": "adf-test/work/*.flx"
-					}
-				],
-				"typeProperties": {
-					"source": {
-						"type": "BinarySource",
-						"storeSettings": {
-							"type": "AzureBlobStorageReadSettings",
-							"recursive": false,
-							"deleteFilesAfterCompletion": true
-						},
-						"formatSettings": {
-							"type": "BinaryReadSettings"
-						}
-					},
-					"sink": {
-						"type": "BinarySink",
-						"storeSettings": {
-							"type": "AzureBlobStorageWriteSettings",
-							"copyBehavior": "FlattenHierarchy"
-						}
-					},
-					"enableStaging": false
-				},
-				"inputs": [
-					{
-						"referenceName": "FLX_BINARY",
-						"type": "DatasetReference"
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "FLX_PROCESSING",
-						"type": "DatasetReference"
-					}
-				]
-			},
-			{
 				"name": "file_list",
 				"description": "Get list of files to process",
 				"type": "GetMetadata",
-				"dependsOn": [
-					{
-						"activity": "move_to_work",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -80,7 +17,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataset": {
-						"referenceName": "FLX_PROCESSING",
+						"referenceName": "XML",
 						"type": "DatasetReference"
 					},
 					"fieldList": [
@@ -88,10 +25,8 @@
 					],
 					"storeSettings": {
 						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
 						"enablePartitionDiscovery": false
-					},
-					"formatSettings": {
-						"type": "BinaryReadSettings"
 					}
 				}
 			},
@@ -169,87 +104,89 @@
 							"userProperties": [],
 							"typeProperties": {
 								"source": {
-									"type": "BinarySource",
+									"type": "XmlSource",
 									"storeSettings": {
 										"type": "AzureBlobStorageReadSettings",
-										"recursive": true,
-										"wildcardFolderPath": "work",
-										"wildcardFileName": {
+										"fileListPath": {
 											"value": "@item()",
 											"type": "Expression"
 										},
-										"deleteFilesAfterCompletion": false
+										"enablePartitionDiscovery": false
 									},
 									"formatSettings": {
-										"type": "BinaryReadSettings"
+										"type": "XmlReadSettings",
+										"validationMode": "none",
+										"namespaces": true
 									}
 								},
 								"sink": {
-									"type": "BinarySink",
+									"type": "JsonSink",
 									"storeSettings": {
 										"type": "AzureBlobStorageWriteSettings",
 										"copyBehavior": "FlattenHierarchy"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
 									}
 								},
 								"enableStaging": false
 							},
 							"inputs": [
 								{
-									"referenceName": "FLX_PROCESSING",
+									"referenceName": "XML",
 									"type": "DatasetReference"
 								}
 							],
 							"outputs": [
 								{
-									"referenceName": "FLX_BINARY_ARCHIVE",
+									"referenceName": "FLX_ARCHIVE",
 									"type": "DatasetReference"
 								}
 							]
+						},
+						{
+							"name": "Delete1",
+							"type": "Delete",
+							"dependsOn": [
+								{
+									"activity": "archive",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "XML",
+									"type": "DatasetReference"
+								},
+								"logStorageSettings": {
+									"linkedServiceName": {
+										"referenceName": "IngressBlobStorage1",
+										"type": "LinkedServiceReference"
+									},
+									"path": "logs"
+								},
+								"enableLogging": true,
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"fileListPath": {
+										"value": "@item()",
+										"type": "Expression"
+									},
+									"enablePartitionDiscovery": false
+								}
+							}
 						}
 					]
-				}
-			},
-			{
-				"name": "Remove from processing",
-				"type": "Delete",
-				"dependsOn": [
-					{
-						"activity": "for_each_file",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"dataset": {
-						"referenceName": "FLX_PROCESSING",
-						"type": "DatasetReference"
-					},
-					"logStorageSettings": {
-						"linkedServiceName": {
-							"referenceName": "IngressBlobStorage1",
-							"type": "LinkedServiceReference"
-						},
-						"path": "logs"
-					},
-					"enableLogging": true,
-					"storeSettings": {
-						"type": "AzureBlobStorageReadSettings",
-						"recursive": false,
-						"wildcardFileName": {
-							"value": "@{activity('file_list').output.childItems}",
-							"type": "Expression"
-						},
-						"enablePartitionDiscovery": false
-					}
 				}
 			}
 		],
