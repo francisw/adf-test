@@ -204,6 +204,11 @@
 					"referenceName": "IngressBlobStorage1",
 					"type": "LinkedServiceReference"
 				},
+				"parameters": {
+					"filename": {
+						"type": "string"
+					}
+				},
 				"folder": {
 					"name": "FLX/in"
 				},
@@ -212,6 +217,10 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@dataset().filename",
+							"type": "Expression"
+						},
 						"folderPath": "in",
 						"container": "adf-test"
 					}
@@ -399,7 +408,9 @@
 							"dataset": {
 								"referenceName": "XML",
 								"type": "DatasetReference",
-								"parameters": {}
+								"parameters": {
+									"filename": "*.xml"
+								}
 							},
 							"fieldList": [
 								"childItems"
@@ -493,10 +504,7 @@
 											"type": "XmlSource",
 											"storeSettings": {
 												"type": "AzureBlobStorageReadSettings",
-												"fileListPath": {
-													"value": "@item()",
-													"type": "Expression"
-												},
+												"recursive": true,
 												"enablePartitionDiscovery": false
 											},
 											"formatSettings": {
@@ -521,7 +529,12 @@
 										{
 											"referenceName": "XML",
 											"type": "DatasetReference",
-											"parameters": {}
+											"parameters": {
+												"filename": {
+													"value": "@item()",
+													"type": "Expression"
+												}
+											}
 										}
 									],
 									"outputs": [
@@ -555,7 +568,12 @@
 										"dataset": {
 											"referenceName": "XML",
 											"type": "DatasetReference",
-											"parameters": {}
+											"parameters": {
+												"filename": {
+													"value": "@item()",
+													"type": "Expression"
+												}
+											}
 										},
 										"logStorageSettings": {
 											"linkedServiceName": {
