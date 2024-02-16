@@ -6,7 +6,7 @@
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
-			"name": "FLX/in"
+			"name": "FLX/stats"
 		},
 		"annotations": [],
 		"type": "Json",

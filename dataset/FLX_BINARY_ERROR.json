@@ -6,7 +6,7 @@
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
-			"name": "error"
+			"name": "FLX/error"
 		},
 		"annotations": [],
 		"type": "Binary",
