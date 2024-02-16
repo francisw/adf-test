@@ -1,5 +1,5 @@
 {
-	"name": "FLX_PROCESSING",
+	"name": "FLX_XML_WORK",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "IngressBlobStorage1",

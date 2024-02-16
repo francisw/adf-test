@@ -9,7 +9,7 @@
 			"sources": [
 				{
 					"dataset": {
-						"referenceName": "FLX_XML_IN",
+						"referenceName": "FLX_XML_WORK",
 						"type": "DatasetReference"
 					},
 					"name": "XMLParser",
@@ -41,8 +41,8 @@
 				"source(output(",
 				"          flx as (Flight as ({@mode} as string, AcMvmt as (OfBl as string, OfBlLt as string, OnBl as string, TDwn as string, TkOf as string), FId as (AC as string, AlD as string, DI as string, Dst as string, Dte as date, Nr as short, Op as string, Org as string, Reg as string, Sf as string), Fuel as (BC as ({@u} as string, {_value_} as short), Dns as ({@u} as string, {_value_} as double), Of as ({@u} as string, {_value_} as short), Rem as ({@u} as string, {_value_} as short), Sd as ({@u} as string, {_value_} as short), Src as string, Sup as string, Up as ({@u} as string, {_value_} as short)))[])",
 				"     ),",
-				"     allowSchemaDrift: false,",
-				"     validateSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: true,",
 				"     ignoreNoFilesFound: false,",
 				"     validationMode: 'xsd',",
 				"     namespaces: true,",
