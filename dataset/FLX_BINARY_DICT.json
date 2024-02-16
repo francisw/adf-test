@@ -1,19 +1,16 @@
 {
-	"name": "FLX_BINARY_IN",
+	"name": "FLX_BINARY_DICT",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "IngressBlobStorage1",
 			"type": "LinkedServiceReference"
-		},
-		"folder": {
-			"name": "FLX/in"
 		},
 		"annotations": [],
 		"type": "Binary",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
-				"folderPath": "in",
+				"folderPath": "dictionary",
 				"container": "adf-test"
 			}
 		}

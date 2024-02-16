@@ -9,7 +9,7 @@
 			"sources": [
 				{
 					"dataset": {
-						"referenceName": "FLX_XML",
+						"referenceName": "FLX_XML_IN",
 						"type": "DatasetReference"
 					},
 					"name": "XMLParser",

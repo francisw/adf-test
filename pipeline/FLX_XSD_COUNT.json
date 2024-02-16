@@ -6,7 +6,14 @@
 				"name": "Get File List",
 				"description": "Get list of files to process",
 				"type": "GetMetadata",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "Copy XML in-work",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -17,14 +24,19 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataset": {
-						"referenceName": "FLX_XML",
+						"referenceName": "FLX_BINARY_WORK",
 						"type": "DatasetReference"
 					},
-					"fieldList": [],
+					"fieldList": [
+						"childItems"
+					],
 					"storeSettings": {
 						"type": "AzureBlobStorageReadSettings",
 						"recursive": true,
 						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
 					}
 				}
 			},
@@ -57,7 +69,7 @@
 				"type": "ForEach",
 				"dependsOn": [
 					{
-						"activity": "Files Array",
+						"activity": "Copy Dictionary",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -151,7 +163,7 @@
 							},
 							"inputs": [
 								{
-									"referenceName": "FLX_BINARY",
+									"referenceName": "FLX_BINARY_IN",
 									"type": "DatasetReference"
 								}
 							],
@@ -186,7 +198,7 @@
 									"type": "BinarySource",
 									"storeSettings": {
 										"type": "AzureBlobStorageReadSettings",
-										"recursive": true,
+										"recursive": false,
 										"wildcardFolderPath": "in",
 										"wildcardFileName": {
 											"value": "@item().name",
@@ -208,7 +220,7 @@
 							},
 							"inputs": [
 								{
-									"referenceName": "FLX_BINARY",
+									"referenceName": "FLX_BINARY_WORK",
 									"type": "DatasetReference"
 								}
 							],
@@ -223,9 +235,72 @@
 				}
 			},
 			{
-				"name": "Copy data1",
+				"name": "Copy XML in-work",
 				"type": "Copy",
 				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "adf-test/in/"
+					},
+					{
+						"name": "Destination",
+						"value": "adf-test/work/"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "BinarySource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": "in",
+							"wildcardFileName": "*.xml",
+							"deleteFilesAfterCompletion": false
+						},
+						"formatSettings": {
+							"type": "BinaryReadSettings"
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "FLX_BINARY_IN",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "FLX_BINARY_WORK",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy Dictionary",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Files Array",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -236,23 +311,35 @@
 				"userProperties": [],
 				"typeProperties": {
 					"source": {
-						"type": "XmlSource",
+						"type": "BinarySource",
 						"storeSettings": {
 							"type": "AzureBlobStorageReadSettings",
 							"recursive": true,
-							"enablePartitionDiscovery": false
+							"wildcardFolderPath": "dictionary",
+							"wildcardFileName": "*.xsd",
+							"deleteFilesAfterCompletion": false
 						},
 						"formatSettings": {
-							"type": "XmlReadSettings",
-							"validationMode": "none",
-							"namespaces": true
+							"type": "BinaryReadSettings"
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
 						}
 					},
 					"enableStaging": false
 				},
 				"inputs": [
 					{
-						"referenceName": "FLX_XML",
+						"referenceName": "FLX_BINARY_DICT",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "FLX_BINARY_WORK",
 						"type": "DatasetReference"
 					}
 				]

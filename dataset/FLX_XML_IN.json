@@ -1,5 +1,5 @@
 {
-	"name": "FLX_XML",
+	"name": "FLX_XML_IN",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "IngressBlobStorage1",
@@ -13,7 +13,6 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
-				"fileName": "*.xml",
 				"folderPath": "in",
 				"container": "adf-test"
 			}
