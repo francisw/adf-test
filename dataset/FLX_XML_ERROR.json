@@ -1,0 +1,21 @@
+{
+	"name": "FLX_XML_ERROR",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "IngressBlobStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "FLX/error"
+		},
+		"annotations": [],
+		"type": "Xml",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": "error",
+				"container": "adf-test"
+			}
+		}
+	}
+}

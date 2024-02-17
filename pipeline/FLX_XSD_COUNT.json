@@ -30,7 +30,9 @@
 							"filename": "*.xml"
 						}
 					},
-					"fieldList": [],
+					"fieldList": [
+						"itemName"
+					],
 					"storeSettings": {
 						"type": "AzureBlobStorageReadSettings",
 						"recursive": true,
@@ -143,11 +145,6 @@
 									"storeSettings": {
 										"type": "AzureBlobStorageReadSettings",
 										"recursive": true,
-										"wildcardFolderPath": "in",
-										"wildcardFileName": {
-											"value": "@item().name",
-											"type": "Expression"
-										},
 										"deleteFilesAfterCompletion": false
 									},
 									"formatSettings": {
@@ -164,8 +161,14 @@
 							},
 							"inputs": [
 								{
-									"referenceName": "FLX_BINARY_IN",
-									"type": "DatasetReference"
+									"referenceName": "FLX_BINARY_WORK",
+									"type": "DatasetReference",
+									"parameters": {
+										"filename": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
 								}
 							],
 							"outputs": [
@@ -200,11 +203,6 @@
 									"storeSettings": {
 										"type": "AzureBlobStorageReadSettings",
 										"recursive": false,
-										"wildcardFolderPath": "in",
-										"wildcardFileName": {
-											"value": "@item().name",
-											"type": "Expression"
-										},
 										"deleteFilesAfterCompletion": false
 									},
 									"formatSettings": {
@@ -222,7 +220,13 @@
 							"inputs": [
 								{
 									"referenceName": "FLX_BINARY_WORK",
-									"type": "DatasetReference"
+									"type": "DatasetReference",
+									"parameters": {
+										"filename": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
 								}
 							],
 							"outputs": [
@@ -258,16 +262,18 @@
 				],
 				"typeProperties": {
 					"source": {
-						"type": "BinarySource",
+						"type": "XmlSource",
 						"storeSettings": {
 							"type": "AzureBlobStorageReadSettings",
 							"recursive": true,
 							"wildcardFolderPath": "in",
 							"wildcardFileName": "*.xml",
-							"deleteFilesAfterCompletion": false
+							"enablePartitionDiscovery": false
 						},
 						"formatSettings": {
-							"type": "BinaryReadSettings"
+							"type": "XmlReadSettings",
+							"validationMode": "none",
+							"namespaces": true
 						}
 					},
 					"sink": {
@@ -280,7 +286,7 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "FLX_BINARY_IN",
+						"referenceName": "FLX_XML_IN",
 						"type": "DatasetReference"
 					}
 				],
